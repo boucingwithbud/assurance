@@ -23,8 +23,11 @@ from app.transcrire import (
     TranscrireFacture,
     TranscrireCNIRecto,
     TranscrireCNIVerso,
-    TranscrirePermisConduire,
-    TranscrireCarteGrise
+    TranscrirePermisConduireRecto,
+    TranscrirePermisConduireVerso,
+    TranscrireCarteGriseRecto,
+    TranscrireCarteGriseVerso,
+    TranscrireBulletinAdhesion
 )
 import app.models as models
 import app.schemas as schemas
@@ -39,7 +42,7 @@ processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 router = APIRouter(tags=['Extraction de caractères'], prefix='')
 @router.post('/certificat_de_visite_technique', summary= "Permet de détecter si le document chargé est un certificat de visite technique ou non et d'extraire ses informations de manière structurée")
-def vt(file: UploadFile = File(...)):
+def vt_verso(file: UploadFile = File(...)):
 
     if file.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG.")
@@ -125,8 +128,8 @@ def cni_verso(file: UploadFile = File(...)):
 
     return {"is_carte_didentite": dict[classes], "output": output}
 
-@router.post('/permis_conduire', summary= "Permet de détecter si le document chargé est un permis de conduire ou non et d'extraire les informations du permis de conduire de manière structurée")
-def permis_conduire(file: UploadFile = File(...)):
+@router.post('/permis_conduire_verso', summary= "Permet de détecter si le document chargé est un permis de conduire ou non et d'extraire les informations du permis de conduire de manière structurée")
+def permis_conduire_verso(file: UploadFile = File(...)):
 
     if file.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG.")
@@ -142,14 +145,35 @@ def permis_conduire(file: UploadFile = File(...)):
 
     img_to_base64 = encode_image_to_base64(file.file)
 
-    output = TranscrirePermisConduire.transcribe_base64(img_to_base64)
+    output = TranscrirePermisConduireVerso.transcribe_base64(img_to_base64)
 
     return {"is_permis_conduire": dict[classes], "output": output}
 
 
+@router.post('/permis_conduire_recto', summary= "Permet de détecter si le document chargé est un permis de conduire ou non et d'extraire les informations du permis de conduire de manière structurée")
+def permis_conduire_recto(file: UploadFile = File(...)):
 
-@router.post('/carte_grise', summary= "Permet de détecter si le document chargé est une carte grise ou non et d'extraire les informations de manière structurée")
-def carte_grise(file: UploadFile = File(...)):
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status_code=400, detail="Fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG.")
+    
+    img = Image.open(file.file)
+    inputs = processor(text=["N'est pas un permis de conduire", "est un permis de conduire"], images= img, return_tensors="pt", padding=True)
+    outputs = model(**inputs)
+    logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+    probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
+    classes = probs.argmax().item()
+    dict = {0: False, 1: True}
+    is_permis_conduire = dict[classes]
+
+    img_to_base64 = encode_image_to_base64(file.file)
+
+    output = TranscrirePermisConduireRecto.transcribe_base64(img_to_base64)
+
+    return {"is_permis_conduire": dict[classes], "output": output}
+
+
+@router.post('/carte_grise_recto', summary= "Permet de détecter si le document chargé est une carte grise ou non et d'extraire les informations du recto de manière structurée")
+def carte_grise_recto(file: UploadFile = File(...)):
 
     if file.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG.")
@@ -165,7 +189,51 @@ def carte_grise(file: UploadFile = File(...)):
 
     img_to_base64 = encode_image_to_base64(file.file)
 
-    output = TranscrireCarteGrise.transcribe_base64(img_to_base64)
+    output = TranscrireCarteGriseRecto.transcribe_base64(img_to_base64)
 
     return {"is_carte_grise": dict[classes], "output": output}
+
+  
+@router.post('/carte_grise_verso', summary= "Permet de détecter si le document chargé est une carte grise ou non et d'extraire les informations du verso de manière structurée")
+def carte_grise_verso(file: UploadFile = File(...)):
+
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status_code=400, detail="Fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG.")
     
+    img = Image.open(file.file)
+    inputs = processor(text=["N'est pas une carte grise", "est une carte grise"], images= img, return_tensors="pt", padding=True)
+    outputs = model(**inputs)
+    logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+    probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
+    classes = probs.argmax().item()
+    dict = {0: False, 1: True}
+    is_carte_grise = dict[classes]
+
+    img_to_base64 = encode_image_to_base64(file.file)
+
+    output = TranscrireCarteGriseVerso.transcribe_base64(img_to_base64)
+
+    return {"is_carte_grise": dict[classes], "output": output}
+
+
+
+@router.post('/formulaire_adhesion', summary= "Permet de détecter si le document chargé est un formulaire d'adhésion ou non et d'extraire les informations de manière structurée")
+def formulaire_adhesion(file: UploadFile = File(...)):
+
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status_code=400, detail="Fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG.")
+    
+    img = Image.open(file.file)
+    inputs = processor(text=["N'est pas un formulaire d'adhésion d'assurance", "est un formulaire d'adhésion d'assurance"], images= img, return_tensors="pt", padding=True)
+    outputs = model(**inputs)
+    logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+    probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
+    classes = probs.argmax().item()
+    dict = {0: False, 1: True}
+    is_formulaire_adhesion = dict[classes] 
+
+    img_to_base64 = encode_image_to_base64(file.file)
+
+    output = TranscrireBulletinAdhesion.transcribe_base64(img_to_base64)
+
+    return {"is_formulaire_adhesion": dict[classes], "output": output}

@@ -9,10 +9,9 @@ from datetime import datetime
 router = APIRouter(prefix= "/Visite_technique_formulaire", tags= ["formulaire visite technique"])
 @router.post('/bdd_visite_tech')
 def create_visite_info(request: schemas.VisiteInfo, db: Session= Depends(get_db)):
-    if request.date_visite > datetime.now().date():
-        raise HTTPException(status_code=400, detail="La date de visite ne peut pas être dans le futur.")
-    if request.date_visite < request.date_mise_circulation:
-        raise HTTPException(status_code=400, detail="La date de visite ne peut pas être antérieure à la date de mise en circulation.")
+
+    if request.mise_en_circulation > datetime.now().date():
+        raise HTTPException(status_code=400, detail="La date de mise en circulation ne peut pas être dans le futur.")
     visite_info = models.VisiteInfo(**request.dict())
     db.add(visite_info)
     db.commit()

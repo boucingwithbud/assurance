@@ -94,58 +94,89 @@ class CniInfoRectoVerso(Base):
 
     nom = Column(String, nullable=True)
     prenom = Column(String, nullable=True)
-    date_de_naissance = Column(Date, nullable=True)
+    date_naissance = Column(Date, nullable=True)
     lieu_de_naissance = Column(String, nullable=True)
     sexe = Column(String, nullable=True)
     taille = Column(Float, nullable=True)
-    date_d_expiration = Column(Date, nullable=True)
+    date_expiration = Column(Date, nullable=True)
     numero_de_cni = Column(String, nullable=True)
     nationalite = Column(String, nullable=True)
     nni = Column(String, nullable=True)
     profession = Column(String, nullable=True)
-    date_d_emission = Column(Date, nullable=True)
-    autorite_d_emission = Column(String, nullable=True)
+    date_emission = Column(Date, nullable=True)
+    autorite_emission = Column(String, nullable=True)
 
 
-class PermisConduireInfo(Base):
+class PermisConduireRectoVerso(Base):
     __tablename__ = "permis_conduire"
 
     id = Column(Integer, primary_key=True, index=True)
 
+    # =========================
+    # INFORMATIONS PERSONNELLES
+    # =========================
     nom = Column(String, nullable=True)
     prenom = Column(String, nullable=True)
-
     date_naissance = Column(Date, nullable=True)
+    addresse = Column(String, nullable=True)
     lieu_naissance = Column(String, nullable=True)
 
-    adresse = Column(String, nullable=True)
-
+    # =========================
+    # INFORMATIONS PERMIS
+    # =========================
+    date_delivrance = Column(Date, nullable=True)
     lieu_delivrance = Column(String, nullable=True)
-
-    date_expiration = Column(Date, nullable=True)
-
     numero_permis = Column(String, nullable=True)
 
-    categories = Column(String, nullable=True)
+    # =========================
+    # VALIDITE PAR CATEGORIE
+    # =========================
+    cat_a_validite = Column(Date, nullable=True)
+    cat_b_validite = Column(Date, nullable=True)
+    cat_c_validite = Column(Date, nullable=True)
+    cat_d_validite = Column(Date, nullable=True)
+    cat_e_validite = Column(Date, nullable=True)
 
+    # =========================
+    # EXPIRATION PAR CATEGORIE
+    # =========================
+    cat_a_expiration = Column(Date, nullable=True)
+    cat_b_expiration = Column(Date, nullable=True)
+    cat_c_expiration = Column(Date, nullable=True)
+    cat_d_expiration = Column(Date, nullable=True)
+    cat_e_expiration = Column(Date, nullable=True)
 
-class CarteGriseInfo(Base):
+    # =========================
+    # AUTRES INFOS
+    # =========================
+    groupe_sanguin = Column(String, nullable=True)
+    document_identite = Column(String, nullable=True)
+
+class CarteGriseRectoVerso(Base):
     __tablename__ = "carte_grise"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # ── Identifiants ─────────────────────────────
-    numero_immatriculation = Column(String, nullable=True, index=True)
-    numero_carte_grise = Column(String, nullable=True, unique=True, index=True)
+    # =========================
+    # IDENTIFICATION
+    # =========================
+    numero_immatriculation = Column(String, nullable=True)
+    numero_carte_grise = Column(String, nullable=True)
 
-    # ── Dates ────────────────────────────────────
-    date_premiere_mise_circulation = Column(Date, nullable=True)
+    # =========================
+    # DATES
+    # =========================
+    date_mise_circulation = Column(Date, nullable=True)
     date_edition_carte_grise = Column(Date, nullable=True)
 
-    # ── Titulaire ────────────────────────────────
+    # =========================
+    # TITULAIRE
+    # =========================
     identite_titulaire = Column(String, nullable=True)
 
-    # ── Véhicule ────────────────────────────────
+    # =========================
+    # CARACTERISTIQUES VEHICULE
+    # =========================
     marque = Column(String, nullable=True)
     genre = Column(String, nullable=True)
     type_commercial = Column(String, nullable=True)
@@ -154,13 +185,122 @@ class CarteGriseInfo(Base):
     energie = Column(String, nullable=True)
     usage_vehicule = Column(String, nullable=True)
 
-    # ── Caractéristiques techniques ─────────────
+    # =========================
+    # SPECIFICATIONS TECHNIQUES
+    # =========================
     nombre_essieux = Column(Integer, nullable=True)
     places_assises = Column(Integer, nullable=True)
-
     puissance_fiscale = Column(Integer, nullable=True)
-    cylindree_cc = Column(Integer, nullable=True)
+    cylindree_cc = Column(String, nullable=True)
 
-    masse_vehicule = Column(Integer, nullable=True)  # PTAC
-    pv = Column(Integer, nullable=True)               # poids à vide
-    cu = Column(Integer, nullable=True)               # charge utile
+    masse_vehicule = Column(Integer, nullable=True)
+    pv = Column(Integer, nullable=True)
+    cu = Column(Integer, nullable=True)
+
+    numero_vin_chassis = Column(String, nullable=True)
+    numero_moteur = Column(String, nullable=True)
+    type_technique = Column(String, nullable=True)
+
+    # =========================
+    # INFORMATIONS COMPLEMENTAIRES
+    # =========================
+    societe_credit = Column(String, nullable=True)
+    numero_immatriculation_precedent = Column(String, nullable=True)
+
+
+class BulletinAdhesion:
+    __tablename__ = "bulletin_adhesion"
+    
+    id = Column(Integer, primary_key=True, index=True)
+
+    nom = Column(String, nullable=True)
+    societe_adherente = Column(String, nullable=True)
+    adresse = Column(String, nullable=True)
+    numero_telephone = Column(String, nullable=True)
+
+
+from sqlalchemy import Column, Integer, String, Date, JSON
+from sqlalchemy.ext.declarative import declarative_base
+
+
+
+class BulletinAdhesion(Base):
+    __tablename__ = "bulletin_adhesion"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # =========================
+    # INFORMATIONS GENERALES
+    # =========================
+    nom = Column(String, nullable=True)
+    societe_adherente = Column(String, nullable=True)
+    adresse = Column(String, nullable=True)
+    numero_telephone = Column(String, nullable=True)
+
+    assure_date_entree_entreprise = Column(String, nullable=True)
+
+    # =========================
+    # ASSURE
+    # =========================
+    assure_date_naissance = Column(Date, nullable=True)
+    assure_lieu_naissance = Column(String, nullable=True)
+    assure_profession = Column(String, nullable=True)
+    assure_sport = Column(String, nullable=True)
+    assure_poids = Column(Integer, nullable=True)
+    assure_taille = Column(Integer, nullable=True)
+    assure_maladies = Column(JSON, nullable=True)
+
+    # =========================
+    # CONJOINT
+    # =========================
+    conjoint_date_naissance = Column(Date, nullable=True)
+    conjoint_profession = Column(String, nullable=True)
+    conjoint_sport = Column(String, nullable=True)
+    conjoint_poids = Column(Integer, nullable=True)
+    conjoint_taille = Column(Integer, nullable=True)
+    conjoint_maladies = Column(JSON, nullable=True)
+
+    # =========================
+    # ENFANT 1
+    # =========================
+    premier_enfant_profession = Column(String, nullable=True)
+    premier_enfant_sport = Column(String, nullable=True)
+    premier_enfant_poids = Column(Integer, nullable=True)
+    premier_enfant_taille = Column(Integer, nullable=True)
+    premier_enfant_maladies = Column(JSON, nullable=True)
+
+    # =========================
+    # ENFANT 2
+    # =========================
+    second_enfant_profession = Column(String, nullable=True)
+    second_enfant_sport = Column(String, nullable=True)
+    second_enfant_poids = Column(Integer, nullable=True)
+    second_enfant_taille = Column(Integer, nullable=True)
+    second_enfant_maladies = Column(JSON, nullable=True)
+
+    # =========================
+    # ENFANT 3
+    # =========================
+    troisieme_enfant_profession = Column(String, nullable=True)
+    troisieme_enfant_sport = Column(String, nullable=True)
+    troisieme_enfant_poids = Column(Integer, nullable=True)
+    troisieme_enfant_taille = Column(Integer, nullable=True)
+    troisieme_enfant_maladies = Column(JSON, nullable=True)
+
+    # =========================
+    # ENFANT 4
+    # =========================
+    quatrieme_enfant_profession = Column(String, nullable=True)
+    quatrieme_enfant_sport = Column(String, nullable=True)
+    quatrieme_enfant_poids = Column(Integer, nullable=True)
+    quatrieme_enfant_taille = Column(Integer, nullable=True)
+    quatrieme_enfant_maladies = Column(JSON, nullable=True)
+
+    # =========================
+    # ENFANT 5
+    # =========================
+    cinquieme_enfant_profession = Column(String, nullable=True)
+    cinquieme_enfant_sport = Column(String, nullable=True)
+    cinquieme_enfant_poids = Column(Integer, nullable=True)
+    cinquieme_enfant_taille = Column(Integer, nullable=True)
+    cinquieme_enfant_maladies = Column(JSON, nullable=True)

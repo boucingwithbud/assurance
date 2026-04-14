@@ -55,7 +55,7 @@ class VisiteInfo(BaseModel):
     puis_fis_cv: Optional[int] = Field(default=None, description="à droite de PUIS.FIS.(CV) juste au dessus de MISE EN CIRC.")
     mise_en_circulation: Optional[date] = Field(default=None, description="la date à droite de MISE EN CIRC")
     observations: Optional[str] = Field(default=None, description="à droite de OBSERVATIONS")
-    quotite: Optional[float] = Field(default=None, description="Juste en dessous de QUOTITE")
+    quotite: Optional[int] = Field(default=None, description="Juste en dessous de QUOTITE")
     numero_vignette: Optional[str] = Field(default=None, description="Juste en dessous de N° VIGNETTE")
     ncc: Optional[str] = Field(default=None, description="Juste en dessous de NCC (peut être vide)")
     responsable: Optional[str] = Field(default=None, description="Juste en dessous de RESPONSABLE")
@@ -135,25 +135,24 @@ class TranscrireFacture:
 
     def transcribe_base64(img_base64):
 
-        result = agent_facture.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives à une facture à partir de cette image. Les dates sont au format DD-MM-YYYY renvoie les au format YYYY-MM-DD."
-        "Pour les variables qui représente des valeurs numériques comme les taux ou le montant, extrait uniquement des "
-        "les valeurs numériques en sortie et ignore les autres caractères(il s'agit peut être des unités ou symbôles ou devises ou "
-        "de texte)"},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
+        result = agent_facture.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives à une facture à partir de cette image. Les dates sont au format DD-MM-YYYY renvoie les au format YYYY-MM-DD. Pour ce qui concerne les"
+        "variables qui sont censées etre numériques retourne toujours des valeurs de types numériques et"
+        "supprime les autres caractères non numériques(devise, unité, texte)."},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
 
         return result["structured_response"]
     
 
 class CniInfoRecto(BaseModel):
 
-    Nom: Optional[str] = Field(default=None, description="Nom de famille de la personne titulaire de la carte d'identité")
-    Prenom: Optional[str] = Field(default=None, description="Prénom de la personne titulaire de la carte d'identité")
-    Date_de_naissance: Optional[date] = Field(default=None, description="Date de naissance de la personne titulaire de la carte d'identité au format YYYY-MM-DD")
-    Lieu_de_naissance: Optional[str] = Field(default=None, description="Lieu de naissance de la personne titulaire de la carte d'identité")
-    Sexe: Optional[str] = Field(default=None, description="Sexe de la personne titulaire de la carte d'identité (M ou F)")
-    Taille: Optional[float] = Field(default=None, description="Taille de la personne titulaire de la carte d'identité en cm")
-    Date_d_expiration: Optional[str] = Field(default=None, description="Date d'expiration de la carte d'identité au format YYYY-MM-DD")
-    Numero_de_cni: Optional[str] = Field(default=None, description="Numéro de la carte d'identité")
-    Nationalite: Optional[str] = Field(default=None, description="Nationalité de la personne titulaire de la carte d'identité")
+    nom: Optional[str] = Field(default=None, description="Nom de famille de la personne titulaire de la carte d'identité")
+    prenom: Optional[str] = Field(default=None, description="Prénom de la personne titulaire de la carte d'identité")
+    date_de_naissance: Optional[date] = Field(default=None, description="Date de naissance de la personne titulaire de la carte d'identité au format YYYY-MM-DD")
+    lieu_de_naissance: Optional[str] = Field(default=None, description="Lieu de naissance de la personne titulaire de la carte d'identité")
+    sexe: Optional[str] = Field(default=None, description="Sexe de la personne titulaire de la carte d'identité (M ou F)")
+    taille: Optional[float] = Field(default=None, description="Taille de la personne titulaire de la carte d'identité en cm")
+    date_expiration: Optional[date] = Field(default=None, description="Date d'expiration de la carte d'identité au format YYYY-MM-DD")
+    numero_de_cni: Optional[str] = Field(default=None, description="Numéro de la carte d'identité")
+    nationalite: Optional[str] = Field(default=None, description="Nationalité de la personne titulaire de la carte d'identité")
 
 agent_cni_recto = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'une carte d'identité", response_format= CniInfoRecto)
 
@@ -169,10 +168,10 @@ class TranscrireCNIRecto:
 
 class CniInfoVerso(BaseModel):
 
-    NNI: str = Field(default=None, description="Numéro National d'Identification (NNI) présent au verso de la carte d'identité")
-    Profession: str = Field(default=None, description="Profession de la personne titulaire de la carte d'identité, souvent indiquée au verso")
-    Date_emission: str = Field(default=None, description="Date d'émission de la carte d'identité au format YYYY-MM-DD, souvent indiquée au verso")
-    Autorite_emission: str = Field(default=None, description="Autorité ayant émis la carte d'identité, souvent indiquée au verso")
+    nni: str = Field(default=None, description="Numéro National d'Identification (NNI) présent au verso de la carte d'identité")
+    profession: str = Field(default=None, description="Profession de la personne titulaire de la carte d'identité, souvent indiquée au verso")
+    date_emission: date = Field(default=None, description="Date d'émission de la carte d'identité au format YYYY-MM-DD, souvent indiquée au verso")
+    autorite_emission: str = Field(default=None, description="Autorité ayant émis la carte d'identité, souvent indiquée au verso")
 
 agent_cni_verso = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'une carte d'identité", response_format= CniInfoVerso)
 
@@ -186,54 +185,136 @@ class TranscrireCNIVerso:
     
 
 
-class PermisConduireInfo(BaseModel):
+class PermisConduireRecto(BaseModel):
 
-    Nom: str = Field(default=None, description="Numéro National d'Identification (NNI) présent au verso de la carte d'identité")
-    Prenom: str = Field(default=None, description="Profession de la personne titulaire de la carte d'identité, souvent indiquée au verso")
-    Date_naissance: date = Field(default=None, description="Date d'émission de la carte d'identité au format YYYY-MM-DD, souvent indiquée au verso")
-    Addresse: str = Field(default=None, description="Autorité ayant émis la carte d'identité, souvent indiquée au verso")
-    Lieu_naissance: str = Field(default=None, description="Lieu de naissance de la personne titulaire du permis de conduire")
-    Lieu_delivrance: str = Field(default=None, description="Lieu de délivrance du permis de conduire")
-    Date_expiration: date = Field(default=None, description="Date d'expiration du permis de conduire au format YYYY-MM-DD")
-    Numero_permis: str = Field(default=None, description="Numéro du permis de conduire PC ou N° PERMIS")
-    Categories: str = Field(default=None, description="Catégories de véhicules autorisées par le permis de conduire")
+    nom: Optional[str] = Field(default=None, description="Nom de famille de la personne titulaire du permis de conduire")
+    prenom: Optional[str] = Field(default=None, description="Prénom de la personne titulaire du permis de conduire")
+    date_naissance: Optional[date] = Field(default=None, description="Date de naissance de la personne titulaire du permis de conduire")
+    adresse: Optional[str] = Field(default=None, description="Adresse de la personne titulaire du permis de conduire")
+    lieu_naissance: Optional[str] = Field(default=None, description="Lieu de naissance de la personne titulaire du permis de conduire")
+    date_delivrance: Optional[date] = Field(default=None, description="Date de délivrance du permis de conduire au format YYYY-MM-DD")
+    lieu_delivrance: Optional[str] = Field(default=None, description="Lieu de délivrance du permis de conduire")
+    numero_permis: Optional[str] = Field(default=None, description="Numéro du permis de conduire PC ou N° PERMIS")
 
+agent_permis_conduire_recto = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'un permis de conduire", response_format= PermisConduireRecto)
 
-agent_permis_conduire = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'une carte d'identité", response_format= PermisConduireInfo)
-
-class TranscrirePermisConduire:
+class TranscrirePermisConduireRecto:
 
     def transcribe_base64(img_base64):
 
-        result = agent_permis_conduire.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives au recto d'une carte d'identité à partir de cette image. Les dates sont au format DD-MM-YYYY renvoie les au format YYYY-MM-DD"},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
+        result = agent_permis_conduire_recto.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives au recto d'un permis de conduire à partir de cette image. Les dates sont au format DD-MM-YYYY sur le document, renvoie les au format YYYY-MM-DD"},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
 
         return result["structured_response"]
     
 
 
-class CarteGrise(BaseModel):
 
-    Numero_immatriculation: str = Field(default=None, description="Numéro d'immatriculation du véhicule")
-    Numero_carte_grise: str = Field(default=None, description="Numéro de la carte grise")
-    Date_premiere_mise_circulation: str = Field(default=None, description="Date de première mise en circulation du véhicule au format YYYY-MM-DD")
-    Date_edition_carte_grise: str = Field(default=None, description="Date d'édition de la carte grise au format YYYY-MM-DD")
-    Identite_titulaire: str = Field(default=None, description="Identité du titulaire de la carte grise (nom et prénom)")
-    Marque: str = Field(default=None, description="Marque du véhicule")
-    Genre: str = Field(default=None, description="Genre du véhicule (VP, CTTE, Camion MOTO, etc.)")
-    Type_commercial: str = Field(default=None, description="Type commercial du véhicule")
-    Couleur: str = Field(default=None, description="Couleur du véhicule")
-    Carrosserie: str = Field(default=None, description="Carrosserie du véhicule")
-    Energie: str = Field(default=None, description="Type d'énergie du véhicule (essence, diesel, électrique, Gas-Oil etc.)")        
-    Usage_vehicule: str = Field(default=None, description="Usage du véhicule (particulier, professionnel, privé etc.)")
-    Nombre_essieux: str = Field(default=None, description="Nombre d'essieux du véhicule")
-    Places_assises: str = Field(default=None, description="Nombre de places assises du véhicule")
-    Puissance_fiscale: str = Field(default=None, description="Puissance fiscale du véhicule en CV")
-    Cylindree_CC: str = Field(default=None, description="Cylindrée du véhicule en centimètres cubes (CC)")
-    Masse_vehicule: str = Field(default=None, description=" PTAC ou poids total autorisé en charge du véhicule en kg")
-    PV: str = Field(default=None, description="Poids à vide du véhicule en kg")
-    CU: str = Field(default=None, description="Charge utile du véhicule en kg")
+class PermisConduireVerso(BaseModel):
 
-agent_carte_grise = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'une carte grise", response_format= CarteGrise)
+    cat_a_validite: Optional[date] = Field(default=None, description="Date de validité de la catégorie A au format YYYY-MM-DD")
+    cat_b_validite: Optional[date] = Field(default=None, description="Date de validité de la catégorie B au format YYYY-MM-DD")  
+    cat_d_validite: Optional[date] = Field(default=None, description="Date de validité de la catégorie D au format YYYY-MM-DD")
+    cat_e_validite: Optional[date] = Field(default=None, description="Date de validité de la catégorie E au format YYYY-MM-DD")
+    cat_a_expiration: Optional[date] = Field(default=None, description="Date d'expiration de la catégorie A au format YYYY-MM-DD")
+    cat_b_expiration: Optional[date] = Field(default=None, description="Date d'expiration de la catégorie B au format YYYY-MM-DD")
+    cat_c_expiration: Optional[date] = Field(default=None, description="Date d'expiration de la catégorie C au format YYYY-MM-DD")
+    cat_d_expiration: Optional[date] = Field(default=None, description="Date d'expiration de  la catégorie D au format YYYY-MM-DD")
+    cat_e_expiration: Optional[date] = Field(default=None, description="Date d'expiration de la catégorie E au format YYYY-MM-DD")    
+    groupe_sanguin: Optional[str] = Field(default=None, description="Groupe sanguin de la personne titulaire du permis de conduire, souvent indiqué au verso du permis")
+    document_identite: Optional[str] = Field(default=None, description= "Le numéro du document" \
+    "d'identité, identifiant commancant par CNI-")
+
+agent_permis_conduire_verso = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'un permis de conduire", response_format= PermisConduireVerso) 
+
+class TranscrirePermisConduireVerso:
+
+    def transcribe_base64(img_base64):
+
+        result = agent_permis_conduire_verso.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives au verso d'un permis de conduire à partir de cette image. Les dates sont au format DD-MM-YYYY renvoie les au format YYYY-MM-DD"},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
+
+        return result["structured_response"]    
+
+
+
+
+class CarteGriseRecto(BaseModel):
+
+    numero_immatriculation: Optional[str] = Field(default=None, description="Numéro d'immatriculation du véhicule")
+    numero_carte_grise: Optional[str] = Field(default=None, description="Numéro de la carte grise")
+    date_premiere_mise_circulation: Optional[str] = Field(default=None, description="Date de première mise en circulation du véhicule au format YYYY-MM-DD")
+    date_edition_carte_grise: Optional[str] = Field(default=None, description="Date d'édition de la carte grise au format YYYY-MM-DD")
+    identite_titulaire: Optional[str] = Field(default=None, description="Identité du titulaire de la carte grise (nom et prénom)")
+    marque: Optional[str] = Field(default=None, description="Marque du véhicule")
+    genre: Optional[str] = Field(default=None, description="Genre du véhicule (VP, CTTE, Camion MOTO, etc.)")
+    type_commercial: Optional[str] = Field(default=None, description="Type commercial du véhicule")
+    couleur: Optional[str] = Field(default=None, description="Couleur du véhicule")
+    carrosserie: Optional[str] = Field(default=None, description="Carrosserie du véhicule")
+    energie: Optional[str] = Field(default=None, description="Type d'énergie du véhicule (essence, diesel, électrique, Gas-Oil etc.)")        
+    usage_vehicule: Optional[str] = Field(default=None, description="Usage du véhicule (particulier, professionnel, privé etc.)")
+
+agent = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'une carte grise", response_format= CarteGriseRecto)
+
+
+class TranscrireCarteGriseRecto:
+
+    def transcribe_base64(img_base64):
+
+        result = agent.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives au recto d'une carte grise à partir de cette image. Les dates sont au format DD-MM-YYYY renvoie les au format YYYY-MM-DD"},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
+
+        return result["structured_response"]
+    
+
+
+class CarteGriseVerso(BaseModel):
+
+    numero_vin_chassis: Optional[str] = Field(default=None, description="Numéro VIN ou numéro de châssis du véhicule")
+    societe_credit: Optional[str] = Field(default=None, description="Société de crédit si le véhicule est acheté à crédit")
+    numero_moteur: Optional[str] = Field(default=None, description="Numéro de moteur du véhicule")
+    type_technique: Optional[str] = Field(default=None, description="Type technique du véhicule")
+    numero_immatriculation_precedent: Optional[str] = Field(default=None, description="Numéro d'immatriculation précédente du véhicule s'il y a lieu")
+
+agent_verso = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'une carte grise", response_format= CarteGriseVerso)
+
+
+class TranscrireCarteGriseVerso:
+
+    def transcribe_base64(img_base64):
+
+        result = agent_verso.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives au verso d'une carte grise à partir de cette image. Les dates sont au format DD-MM-YYYY renvoie les au format YYYY-MM-DD"},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
+
+        return result["structured_response"]
+
+
+class CarteGriseRectoVerso(BaseModel):
+
+    numero_immatriculation: Optional[str] = Field(default=None, description="Numéro d'immatriculation du véhicule")
+    numero_carte_grise: Optional[str] = Field(default=None, description="Numéro de la carte grise")
+    date_premiere_mise_circulation: Optional[str] = Field(default=None, description="Date de première mise en circulation du véhicule au format YYYY-MM-DD")
+    date_edition_carte_grise: Optional[str] = Field(default=None, description="Date d'édition de la carte grise au format YYYY-MM-DD")
+    identite_titulaire: Optional[str] = Field(default=None, description="Identité du titulaire de la carte grise (nom et prénom)")
+    marque: Optional[str] = Field(default=None, description="Marque du véhicule")
+    genre: Optional[str] = Field(default=None, description="Genre du véhicule (VP, CTTE, Camion MOTO, etc.)")
+    type_commercial: Optional[str] = Field(default=None, description="Type commercial du véhicule")
+    couleur: Optional[str] = Field(default=None, description="Couleur du véhicule")
+    carrosserie: Optional[str] = Field(default=None, description="Carrosserie du véhicule")
+    energie: Optional[str] = Field(default=None, description="Type d'énergie du véhicule (essence, diesel, électrique, Gas-Oil etc.)")        
+    usage_vehicule: Optional[str] = Field(default=None, description="Usage du véhicule (particulier, professionnel, privé etc.)")
+    nombre_essieux: Optional[str] = Field(default=None, description="Nombre d'essieux du véhicule")
+    places_assises: Optional[str] = Field(default=None, description="Nombre de places assises du véhicule")
+    puissance_fiscale: Optional[str] = Field(default=None, description="Puissance fiscale du véhicule en CV")
+    cylindree_CC: Optional[str] = Field(default=None, description="Cylindrée du véhicule en centimètres cubes (CC)")
+    masse_vehicule: Optional[str] = Field(default=None, description=" PTAC ou poids total autorisé en charge du véhicule en kg")
+    PV: Optional[str] = Field(default=None, description="Poids à vide du véhicule en kg")
+    CU: Optional[str] = Field(default=None, description="Charge utile du véhicule en kg")
+    numero_vin_chassis: Optional[int] = Field(default=None, description="Numéro VIN ou numéro de châssis du véhicule")
+    societe_credit: Optional[str] = Field(default=None, description="Société de crédit si le véhicule est acheté à crédit")
+    numero_moteur: Optional[str] = Field(default=None, description="Numéro de moteur du véhicule")
+    type_technique: Optional[str] = Field(default=None, description="Type technique du véhicule")
+    numero_immatriculation_precedent: Optional[str] = Field(default=None, description="Numéro d'immatriculation précédente du véhicule s'il y a lieu")
+
+agent_carte_grise = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'une carte grise", response_format= CarteGriseRectoVerso)
+
+
 
 class TranscrireCarteGrise:
 
@@ -244,3 +325,59 @@ class TranscrireCarteGrise:
         return result["structured_response"]
 
 
+class BulletinAdhesion(BaseModel):
+
+    nom: Optional[str] = Field(default=None, description="Nom de famille de l'adhérent")
+    societe_adherente: Optional[str] = Field(default=None, description="Nom de la société à laquelle l'adhérent est affilié")
+    adresse: Optional[str] = Field(default=None, description="Adresse complète de l'adhérent")
+    numero_telephone: Optional[str] = Field(default=None, description="Numéro de téléphone de l'adhérent")
+    assure_date_entree_entreprise: Optional[str] = Field(default=None, description="Date d'entrée de l'adhérent dans l'entreprise au format YYYY-MM-DD")
+    assure_date_naissance: Optional[date] = Field(default=None, description="Date de naissance de l'adhérent au format YYYY-MM-DD")
+    assure_lieu_naissance: Optional[str] = Field(default=None, description="Lieu de naissance de l'adhérent")
+    conjoint_date_naissance: Optional[date] = Field(default=None, description="Date de naissance du conjoint de l'adhérent au format YYYY-MM-DD")
+    assure_profession: Optional[str] = Field(default=None, description="Profession de l'adhérent")
+    conjoint_profession: Optional[str] = Field(default=None, description="Profession du conjoint de l'adhérent")
+    premier_enfant_profession: Optional[str] = Field(default=None, description="Profession de l'adhérent")
+    second_enfant_profession: Optional[str] = Field(default=None, description="Profession du conjoint de l'adhérent")
+    troisieme_enfant_profession: Optional[str] = Field(default=None, description="Profession de l'adhérent")
+    quatrieme_enfant_profession: Optional[str] = Field(default=None, description="Profession du conjoint de l'adhérent")
+    cinquieme_enfant_profession: Optional[str] = Field(default=None, description="Profession de l'adhérent")
+    assure_sport: Optional[str] = Field(default=None, description="Sport pratiqué par l'adhérent")
+    conjoint_sport: Optional[str] = Field(default=None, description="Sport pratiqué par le conjoint de l'adhérent")
+    premier_enfant_sport: Optional[str] = Field(default=None, description="Sport pratiqué par le premier enfant de l'adhérent")
+    second_enfant_sport: Optional[str] = Field(default=None, description="Sport pratiqué par le second enfant de l'adhérent")
+    troisieme_enfant_sport: Optional[str] = Field(default=None, description="Sport pratiqué par le troisième enfant de l'adhérent")
+    quatrieme_enfant_sport: Optional[str] = Field(default=None, description="Sport pratiqué par le quatrième enfant de l'adhérent")
+    cinquieme_enfant_sport: Optional[str] = Field(default=None, description="Sport pratiqué par le cinquième enfant de l'adhérent")
+    assure_poids: Optional[int] = Field(default=None, description="Poids de l'adhérent en kg")
+    conjoint_poids: Optional[int] = Field(default=None, description="Poids du conjoint de l'adhérent en kg")
+    premier_enfant_poids: Optional[int] = Field(default=None, description="Poids du premier enfant de l'adhérent en kg")
+    second_enfant_poids: Optional[int] = Field(default=None, description="Poids du second enfant de l'adhérent en kg")
+    troisieme_enfant_poids: Optional[int] = Field(default=None, description="Poids du troisième enfant de l'adhérent en kg")
+    quatrieme_enfant_poids: Optional[int] = Field(default=None, description="Poids du quatrième enfant de l'adhérent en kg")
+    cinquieme_enfant_poids: Optional[int] = Field(default=None, description="Poids du cinquième enfant de l'adhérent en kg")
+    assure_taille: Optional[int] = Field(default=None, description="Taille de l'adhérent en cm")
+    conjoint_taille: Optional[int] = Field(default=None, description="Taille du conjoint de l'adhérent en cm")
+    premier_enfant_taille: Optional[int] = Field(default=None, description="Taille du premier enfant de l'adhérent en cm")
+    second_enfant_taille: Optional[int] = Field   (default=None, description="Taille du second enfant de l'adhérent en cm")
+    troisieme_enfant_taille: Optional[int] = Field(default=None, description="Taille du troisième enfant de l'adhérent en cm")
+    quatrieme_enfant_taille: Optional[int] = Field(default=None, description="Taille du quatrième enfant de l'adhérent en cm")
+    cinquieme_enfant_taille: Optional[int] = Field(default=None, description="Taille du cinquième enfant de l'adhérent en cm")
+    assure_maladies: List[str] = Field(default_factory=list, description="Liste des maladies ou conditions médicales de l'adhérent")
+    conjoint_maladies: List[str] = Field(default_factory=list, description="Liste des maladies ou conditions médicales du conjoint de l'adhérent")
+    premier_enfant_maladies: List[str] = Field(default_factory=list, description="Liste des maladies ou conditions médicales du premier enfant de l'adhérent")
+    second_enfant_maladies: List[str] = Field(default_factory=list, description="Liste des maladies ou conditions médicales du second enfant de l'adhérent")
+    troisieme_enfant_maladies: List[str] = Field(default_factory=list, description="Liste des maladies ou conditions médicales du troisième enfant de l'adhérent")
+    quatrieme_enfant_maladies: List[str] = Field(default_factory=list, description="Liste des maladies ou conditions médicales du quatrième enfant de l'adhérent")
+    cinquieme_enfant_maladies: List[str] = Field(default_factory=list, description="Liste des maladies ou conditions médicales du cinquième enfant de l'adhérent")    
+
+
+agent_bulletin_adhesion = create_agent(model = model, system_prompt= "Tu es un assistant qui transcris les informations essentielles d'un bulletin d'adhésion à une assurance", response_format= BulletinAdhesion)
+
+class TranscrireBulletinAdhesion:
+
+    def transcribe_base64(img_base64):
+
+        result = agent_bulletin_adhesion.invoke({"messages": [{"role": "user", "content": [{"type": "text", "text": "Extrais les informations relatives à un bulletin d'adhésion à une assurance à partir de cette image. Les dates sont au format DD-MM-YYYY renvoie les au format YYYY-MM-DD"},{"type": "image", "base64": img_base64, "mime_type": "image/png"}]}]})
+
+        return result["structured_response"]
